@@ -168,3 +168,84 @@
 @media (max-width: 768px) {
   .cart-layout { grid-template-columns: 1fr; }
 }
+
+/* ── Confirm screens ── */
+.confirm-box {
+  text-align: center;
+  max-width: 520px;
+  margin: 60px auto;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 40px;
+}
+.confirm-icon { font-size: 56px; margin-bottom: 20px; display: block; }
+.confirm-box h2 { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 12px; }
+.confirm-box p  { font-size: 15px; color: var(--text2); line-height: 1.7; margin-bottom: 24px; }
+
+.confirm-steps {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 28px; text-align: left;
+}
+.cs-step {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px; color: var(--text);
+}
+.cs-step span {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent-light); color: var(--accent);
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.confirm-btn {
+  display: inline-block;
+  padding: 12px 28px;
+  background: var(--primary); color: white;
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 700;
+  transition: opacity 0.15s;
+}
+.confirm-btn:hover { opacity: 0.85; }
+.confirm-btn.whatsapp-btn { background: #25D366; }
+
+/* ── RIB box ── */
+.rib-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.rib-row {
+  display: flex; justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.rib-row:last-child { border-bottom: none; }
+.rib-row span { color: var(--text2); }
+
+/* ── Method info banners ── */
+.method-info {
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.method-info.whatsapp { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.method-info.konnect  { background: #e8f0fe; color: #1e3a5f; border: 1px solid #bfdbfe; }
+.method-info.paypal   { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.method-info.transfer { background: #f5f3ff; color: #4c1d95; border: 1px solid #ddd6fe; }
+
+/* ── Payment badge pill ── */
+.pm-badge {
+  font-size: 10px; font-weight: 600;
+  padding: 1px 7px; border-radius: 20px;
+  margin-left: 7px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
