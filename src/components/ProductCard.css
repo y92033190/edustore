@@ -1,0 +1,140 @@
+.product-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.card-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  position: relative;
+  text-decoration: none;
+}
+
+.cover-icon { font-size: 48px; }
+
+.cover-pages {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+  opacity: 0.8;
+}
+
+.cover-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+[dir="rtl"] .cover-badge { right: auto; left: 12px; }
+
+.card-body { padding: 16px; }
+
+.card-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card-subject {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.card-level {
+  font-size: 12px;
+  color: var(--text3);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.card-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 12px;
+  min-height: 40px;
+}
+
+.card-title:hover { color: var(--accent); }
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-price small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text2);
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-preview {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  background: transparent;
+  transition: all 0.15s;
+}
+
+.btn-preview:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-buy {
+  padding: 6px 14px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.btn-buy:hover:not(:disabled) { opacity: 0.85; }
+
+.btn-buy.in-cart {
+  background: var(--success);
+  cursor: default;
+}
