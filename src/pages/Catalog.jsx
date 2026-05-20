@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../context/LangContext';
 import { getProducts } from '../lib/api';
-import { PRODUCTS } from '../lib/data';
 import ProductCard from '../components/ProductCard';
 import './Catalog.css';
 
 export default function Catalog() {
   const { lang, t } = useLang();
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [level, setLevel] = useState('all');
-  const [type, setType] = useState('all');
-  const [sort, setSort] = useState('popular');
-  const [search, setSearch] = useState('');
+  const [loading, setLoading]   = useState(true);
+  const [level, setLevel]       = useState('all');
+  const [type, setType]         = useState('all');
+  const [sort, setSort]         = useState('popular');
+  const [search, setSearch]     = useState('');
 
   useEffect(() => { loadProducts(); }, [level, type, search]);
 
@@ -20,9 +19,10 @@ export default function Catalog() {
     setLoading(true);
     try {
       const data = await getProducts({ level, type, search });
-      setProducts(data.length > 0 ? data : PRODUCTS);
-    } catch {
-      setProducts(PRODUCTS);
+      setProducts(data);
+    } catch (e) {
+      console.error(e);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -30,23 +30,23 @@ export default function Catalog() {
 
   const sorted = [...products].sort((a, b) => {
     if (sort === 'popular') return (b.downloads || 0) - (a.downloads || 0);
-    if (sort === 'price') return a.price - b.price;
+    if (sort === 'price')   return a.price - b.price;
     return 0;
   });
 
   const levels = [
-    { key: 'all', fr: 'Tout', ar: 'الكل' },
-    { key: 'lycee', fr: 'Lycée', ar: 'ثانوية' },
-    { key: 'uni', fr: 'Université', ar: 'جامعة' },
-    { key: 'pro', fr: 'Formation', ar: 'تكوين' },
+    { key: 'all',   fr: 'Tout',       ar: 'الكل'   },
+    { key: 'lycee', fr: 'Lycée',      ar: 'ثانوية'  },
+    { key: 'uni',   fr: 'Université', ar: 'جامعة'   },
+    { key: 'pro',   fr: 'Formation',  ar: 'تكوين'   },
   ];
 
   const types = [
-    { key: 'all', fr: 'Tout', ar: 'الكل' },
-    { key: 'course', fr: 'Cours', ar: 'درس' },
-    { key: 'homework', fr: 'Devoir', ar: 'واجب' },
-    { key: 'project', fr: 'Projet', ar: 'مشروع' },
-    { key: 'exam', fr: 'Annales', ar: 'امتحانات' },
+    { key: 'all',      fr: 'Tout',    ar: 'الكل'      },
+    { key: 'course',   fr: 'Cours',   ar: 'درس'       },
+    { key: 'homework', fr: 'Devoir',  ar: 'واجب'      },
+    { key: 'project',  fr: 'Projet',  ar: 'مشروع'     },
+    { key: 'exam',     fr: 'Annales', ar: 'امتحانات'  },
   ];
 
   return (
@@ -106,14 +106,14 @@ export default function Catalog() {
           <div className="products-grid">
             {[1,2,3,4,5,6].map(i => <div key={i} className="skeleton-card" />)}
           </div>
-        ) : sorted.length > 0 ? (
-          <div className="products-grid">
-            {sorted.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
-        ) : (
+        ) : sorted.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🔍</div>
             <p>{lang === 'fr' ? 'Aucun résultat trouvé' : 'لا توجد نتائج'}</p>
+          </div>
+        ) : (
+          <div className="products-grid">
+            {sorted.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         )}
       </div>

@@ -1,12 +1,32 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLang } from '../context/LangContext';
-import { PRODUCTS } from '../lib/data';
+import { getProducts, getDashboardStats } from '../lib/api';
 import ProductCard from '../components/ProductCard';
 import './Home.css';
 
 export default function Home() {
-  const { t } = useLang();
-  const popular = [...PRODUCTS].sort((a, b) => b.downloads - a.downloads).slice(0, 3);
+  const { t, lang } = useLang();
+  const [popular, setPopular]   = useState([]);
+  const [stats, setStats]       = useState({ totalProducts: 0, totalClients: 0, paidOrders: 0 });
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const [prods, st] = await Promise.all([getProducts(), getDashboardStats()]);
+        const sorted = [...prods].sort((a, b) => (b.downloads || 0) - (a.downloads || 0)).slice(0, 3);
+        setPopular(sorted);
+        setStats(st);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   return (
     <div className="home">
@@ -30,22 +50,22 @@ export default function Home() {
             <div className="floating-card card1">
               <span>📖</span>
               <div>
-                <div className="fc-title">Cours de maths S2</div>
+                <div className="fc-title">{lang === 'fr' ? 'Cours de maths S2' : 'درس رياضيات'}</div>
                 <div className="fc-price">8 TND</div>
               </div>
             </div>
             <div className="floating-card card2">
               <span>💻</span>
               <div>
-                <div className="fc-title">Projet informatique</div>
+                <div className="fc-title">{lang === 'fr' ? 'Projet informatique' : 'مشروع إعلامية'}</div>
                 <div className="fc-price">15 TND</div>
               </div>
             </div>
             <div className="floating-card card3">
               <span>✅</span>
               <div>
-                <div className="fc-title">387 ventes</div>
-                <div className="fc-price">ce mois</div>
+                <div className="fc-title">{stats.paidOrders} {lang === 'fr' ? 'ventes' : 'مبيعات'}</div>
+                <div className="fc-price">{lang === 'fr' ? 'ce mois' : 'هذا الشهر'}</div>
               </div>
             </div>
             <div className="hero-blob"></div>
@@ -53,47 +73,58 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Stats réelles */}
       <section className="stats-section">
         <div className="container stats-grid">
           <div className="stat-item">
-            <div className="stat-number">54</div>
+            <div className="stat-number">{stats.totalProducts}</div>
             <div className="stat-label">{t.stats.courses}</div>
           </div>
           <div className="stat-item">
-            <div className="stat-number">213</div>
+            <div className="stat-number">{stats.totalClients}</div>
             <div className="stat-label">{t.stats.students}</div>
           </div>
           <div className="stat-item">
-            <div className="stat-number">12</div>
-            <div className="stat-label">{t.stats.subjects}</div>
+            <div className="stat-number">{stats.paidOrders}</div>
+            <div className="stat-label">{lang === 'fr' ? 'Ventes réalisées' : 'مبيعات منجزة'}</div>
           </div>
         </div>
       </section>
 
-      {/* Popular courses */}
+      {/* Produits populaires — depuis Supabase */}
       <section className="popular-section" id="popular">
         <div className="container">
           <div className="section-header">
             <h2 className="section-title">{t.catalog.title}</h2>
-            <Link to="/catalog" className="section-link">
-              {t.hero.cta} →
-            </Link>
+            <Link to="/catalog" className="section-link">{t.hero.cta} →</Link>
           </div>
-          <div className="products-grid">
-            {popular.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
+
+          {loading ? (
+            <div className="products-grid">
+              {[1,2,3].map(i => <div key={i} className="skeleton-card" style={{ height: 320, borderRadius: 12, background: 'var(--border)', animation: 'shimmer 1.4s infinite', backgroundSize: '200% 100%' }} />)}
+            </div>
+          ) : popular.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text2)' }}>
+              {lang === 'fr'
+                ? 'Aucun cours encore — ajoute-en depuis le dashboard admin !'
+                : 'لا توجد دروس بعد — أضفها من لوحة الإدارة!'}
+            </div>
+          ) : (
+            <div className="products-grid">
+              {popular.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Payment methods */}
+      {/* Méthodes de paiement */}
       <section className="payment-section">
         <div className="container">
           <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 24 }}>
             {t.payment.title}
           </h2>
           <div className="payment-methods">
-            {['💳 Flouci', '📱 D17', '🏦 Virement', '💰 PayPal', '💳 Carte'].map(m => (
+            {['💳 Flouci', '📱 D17', '🏦 Virement', '🌐 PayPal', '💰 Carte'].map(m => (
               <div key={m} className="payment-badge">{m}</div>
             ))}
           </div>
