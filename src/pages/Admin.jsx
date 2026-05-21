@@ -616,34 +616,7 @@ export default function Admin() {
 
         {/* ── SETTINGS ── */}
         {section === 'settings' && (
-          <div className="admin-section fade-in">
-            <div className="section-head">
-              <h1 className="section-title">{lang === 'fr' ? 'Paramètres' : 'الإعدادات'}</h1>
-            </div>
-            <div className="settings-grid">
-              <div className="dash-card">
-                <h3 className="settings-group-title">{lang === 'fr' ? 'Informations du site' : 'معلومات الموقع'}</h3>
-                <div className="form-field"><label>{lang === 'fr' ? 'Nom du site' : 'اسم الموقع'}</label><input type="text" defaultValue="EduStore" /></div>
-                <div className="form-field"><label>Email</label><input type="email" defaultValue="contact@edustore.tn" /></div>
-                <div className="form-field"><label>WhatsApp</label><input type="text" defaultValue="+216 XX XXX XXX" /></div>
-              </div>
-              <div className="dash-card">
-                <h3 className="settings-group-title">{lang === 'fr' ? 'Méthodes de paiement actives' : 'طرق الدفع المفعّلة'}</h3>
-                {['Flouci', 'D17', 'Virement bancaire', 'PayPal', 'Carte bancaire'].map(m => (
-                  <div key={m} className="toggle-row">
-                    <span>{m}</span>
-                    <div className="toggle on" />
-                  </div>
-                ))}
-              </div>
-              <div className="dash-card">
-                <h3 className="settings-group-title">Supabase</h3>
-                <div className="info-box">
-                  ✅ {lang === 'fr' ? 'Connecté — les données sont synchronisées en temps réel.' : 'متصل — البيانات متزامنة في الوقت الفعلي.'}
-                </div>
-              </div>
-            </div>
-          </div>
+          <SettingsSection lang={lang} />
         )}
       </main>
 
@@ -660,6 +633,103 @@ export default function Admin() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Settings component with localStorage persistence ──
+function SettingsSection({ lang }) {
+  const DEFAULTS = {
+    siteName: 'EduStore',
+    email: 'contact@edustore.tn',
+    whatsapp: '+216 XX XXX XXX',
+    rib: 'XX XXX XXXX XXXX XXXX XXXX XXX',
+    paypal: 'ton@email.com',
+    konnect_key: '',
+    methods: { flouci: true, d17: true, transfer: true, paypal: true, card: true },
+  };
+
+  const [form, setForm]     = useState(
+    JSON.parse(localStorage.getItem('edustore_settings') || 'null') || DEFAULTS
+  );
+  const [saved2, setSaved2] = useState(false);
+
+  const save = () => {
+    localStorage.setItem('edustore_settings', JSON.stringify(form));
+    setSaved2(true);
+    setTimeout(() => setSaved2(false), 2500);
+  };
+
+  const toggle = (key) => setForm(f => ({ ...f, methods: { ...f.methods, [key]: !f.methods[key] } }));
+
+  return (
+    <div className="admin-section fade-in">
+      <div className="section-head">
+        <div>
+          <h1 className="section-title">{lang === 'fr' ? 'Paramètres' : 'الإعدادات'}</h1>
+          <p className="section-sub">{lang === 'fr' ? 'Sauvegardé localement dans le navigateur' : 'محفوظ محلياً في المتصفح'}</p>
+        </div>
+      </div>
+      <div className="settings-grid">
+        <div className="dash-card">
+          <h3 className="settings-group-title">{lang === 'fr' ? 'Informations du site' : 'معلومات الموقع'}</h3>
+          <div className="form-field" style={{ marginBottom: 12 }}>
+            <label>{lang === 'fr' ? 'Nom du site' : 'اسم الموقع'}</label>
+            <input type="text" value={form.siteName} onChange={e => setForm(f => ({ ...f, siteName: e.target.value }))} />
+          </div>
+          <div className="form-field" style={{ marginBottom: 12 }}>
+            <label>Email</label>
+            <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+          </div>
+          <div className="form-field" style={{ marginBottom: 12 }}>
+            <label>WhatsApp</label>
+            <input type="text" value={form.whatsapp} onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))} />
+          </div>
+          <div className="form-field">
+            <label>RIB bancaire</label>
+            <input type="text" value={form.rib} onChange={e => setForm(f => ({ ...f, rib: e.target.value }))} />
+          </div>
+        </div>
+
+        <div className="dash-card">
+          <h3 className="settings-group-title">{lang === 'fr' ? 'Méthodes de paiement' : 'طرق الدفع'}</h3>
+          {[
+            { key: 'flouci',   label: 'Flouci' },
+            { key: 'd17',      label: 'D17' },
+            { key: 'transfer', label: lang === 'fr' ? 'Virement bancaire' : 'تحويل بنكي' },
+            { key: 'paypal',   label: 'PayPal' },
+            { key: 'card',     label: lang === 'fr' ? 'Carte bancaire' : 'بطاقة بنكية' },
+          ].map(m => (
+            <div key={m.key} className="toggle-row" onClick={() => toggle(m.key)} style={{ cursor: 'pointer' }}>
+              <span>{m.label}</span>
+              <div className={`toggle ${form.methods[m.key] ? 'on' : ''}`} />
+            </div>
+          ))}
+          <div className="form-field" style={{ marginTop: 16 }}>
+            <label>Email PayPal</label>
+            <input type="email" value={form.paypal} onChange={e => setForm(f => ({ ...f, paypal: e.target.value }))} />
+          </div>
+          <div className="form-field" style={{ marginTop: 12 }}>
+            <label>Konnect API Key</label>
+            <input type="text" placeholder="ta-clé-konnect" value={form.konnect_key} onChange={e => setForm(f => ({ ...f, konnect_key: e.target.value }))} />
+          </div>
+        </div>
+
+        <div className="dash-card">
+          <h3 className="settings-group-title">Supabase + EmailJS</h3>
+          <div className="info-box" style={{ marginBottom: 12 }}>
+            ✅ {lang === 'fr' ? 'Supabase connecté — données synchronisées.' : 'Supabase متصل — البيانات متزامنة.'}
+          </div>
+          <div className="info-box" style={{ background: '#e8f0fe', border: '1px solid #B5D4F4', color: '#0C447C' }}>
+            📧 {lang === 'fr' ? 'EmailJS : mets tes clés dans src/lib/email.js' : 'EmailJS : ضع مفاتيحك في src/lib/email.js'}
+          </div>
+        </div>
+      </div>
+
+      {saved2 && <div className="success-toast" style={{ marginTop: 16 }}>✅ {lang === 'fr' ? 'Paramètres sauvegardés !' : 'تم حفظ الإعدادات!'}</div>}
+      <button className="btn-publish" style={{ marginTop: 20 }} onClick={save}>
+        💾 {lang === 'fr' ? 'Sauvegarder les paramètres' : 'حفظ الإعدادات'}
+      </button>
     </div>
   );
 }
