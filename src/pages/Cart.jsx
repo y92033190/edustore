@@ -3,14 +3,15 @@ import { Link } from 'react-router-dom';
 import { useLang } from '../context/LangContext';
 import { useCart } from '../context/CartContext';
 import { createOrder } from '../lib/api';
+import { sendOrderEmail } from '../lib/email';
 import './Cart.css';
 
 // ── Config — remplace par tes vraies infos ──
 const CONFIG = {
-  whatsapp:      '+21629936491',        // ton numéro WhatsApp
+  whatsapp:      '+21600000000',        // ton numéro WhatsApp
   konnect_url:   'https://app.konnect.network/payment-gateway', // URL Konnect
   konnect_key:   'TON_API_KEY_KONNECT', // clé API Konnect
-  paypal_email:  '7waza.contact@email.com',       // email PayPal
+  paypal_email:  'ton@email.com',       // email PayPal
 };
 
 const PAYMENT_METHODS = [
@@ -80,13 +81,15 @@ export default function Cart() {
     return true;
   };
 
-  // ── Sauvegarde la commande dans Supabase ──
+  // ── Sauvegarde la commande dans Supabase + envoie email ──
   const saveOrder = async (status = 'pending') => {
     try {
       await createOrder({ clientName, clientEmail, items, paymentMethod: payMethod, total });
     } catch (e) {
       console.error('Order save error:', e);
     }
+    // Envoie le PDF par email au client
+    await sendOrderEmail({ clientName, clientEmail, items, total, payMethod });
   };
 
   // ── WhatsApp ──
