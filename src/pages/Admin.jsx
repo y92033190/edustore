@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLang } from '../context/LangContext';
 import { useAuth } from '../context/AuthContext';
-import { getProducts, createProduct, deleteProduct, updateProduct, uploadPDF, getOrders, getClients, getDashboardStats } from '../lib/api';
+import { getProducts, createProduct, deleteProduct, updateProduct, uploadPDF, getOrders, getClients, getDashboardStats, updateOrderStatus } from '../lib/api';
+import { sendOrderEmail } from '../lib/email';
 import './Admin.css';
 
 const MOCK_ACTIVITY = [
@@ -33,17 +34,20 @@ export default function Admin() {
   const [clients, setClients]       = useState([]);
   const [stats, setStats]           = useState({ totalProducts: 0, totalOrders: 0, paidOrders: 0, totalRevenue: 0, totalClients: 0 });
   const [loading, setLoading]       = useState(true);
-  const [orderFilter, setOrderFilter] = useState('all');
+  const [orderFilter, setOrderFilter] = useState('pending');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [published, setPublished]   = useState(false);
   const [publishError, setPublishError] = useState('');
   const [publishing, setPublishing] = useState(false);
   const [pdfFile, setPdfFile]       = useState(null);
+  const [sendingOrder, setSendingOrder] = useState(null);
+  const [sentOrders, setSentOrders]   = useState({});
+  const [previewFiles, setPreviewFiles] = useState([]);
 
   const [uploadForm, setUploadForm] = useState({
     title_fr: '', title_ar: '', subject_fr: '', subject_ar: '',
     description_fr: '', description_ar: '',
-    price: '', pages: '', level: 'lycee', type: 'course',
+    price: '', pages: '', preview_pages: '3', level: 'lycee', type: 'course',
   });
 
   // ── Load data on mount and section change ──
@@ -80,7 +84,53 @@ export default function Admin() {
     } catch (e) { console.error(e); }
   }
 
-  // ── Publish new product ──
+  // ── Envoyer PDF manuellement à un client ──
+  const handleSendDocument = async (order) => {
+    setSendingOrder(order.id);
+    try {
+      // Récupère les produits de la commande
+      const orderItems = (order.order_items || []).map(item => item.product).filter(Boolean);
+      // Si pas de produits liés, crée un item minimal
+      const itemsToSend = orderItems.length > 0 ? orderItems : [{
+        title_fr: lang === 'fr' ? 'Document acheté' : 'وثيقة مشتراة',
+        title_ar: 'وثيقة مشتراة',
+        price: order.total,
+        pages: 0,
+        pdf_url: '#',
+      }];
+
+      await sendOrderEmail({
+        clientName:  order.client_name,
+        clientEmail: order.client_email,
+        items:       itemsToSend,
+        total:       order.total,
+        payMethod:   order.payment_method,
+      });
+
+      // Marque la commande comme payée
+      await updateOrderStatus(order.id, 'paid');
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'paid' } : o));
+      setSentOrders(prev => ({ ...prev, [order.id]: true }));
+    } catch (e) {
+      console.error('Send error:', e);
+      alert(lang === 'fr' ? 'Erreur envoi email. Vérifie les clés EmailJS.' : 'خطأ في إرسال البريد. تحقق من مفاتيح EmailJS.');
+    } finally {
+      setSendingOrder(null);
+    }
+  };
+
+  // ── WhatsApp manuel ──
+  const handleSendWhatsApp = (order) => {
+    const msg = encodeURIComponent(
+      `✅ *Commande confirmée — EduStore*\n\n` +
+      `Bonjour ${order.client_name},\n\n` +
+      `Votre commande de ${order.total} TND a été confirmée.\n` +
+      `Voici votre document PDF :\n\n` +
+      `[Lien PDF ici]\n\n` +
+      `Merci pour votre achat ! 🎓`
+    );
+    window.open(`https://wa.me/${order.client_phone || ''}?text=${msg}`, '_blank');
+  };
   const handlePublish = async () => {
     if (!uploadForm.title_fr || !uploadForm.price) {
       setPublishError(lang === 'fr' ? 'Titre FR et prix sont obligatoires.' : 'العنوان والسعر مطلوبان.');
@@ -102,7 +152,7 @@ export default function Admin() {
         price:          parseFloat(uploadForm.price) || 0,
         pages:          parseInt(uploadForm.pages) || 0,
         downloads:      0,
-        preview_pages:  3,
+        preview_pages:  parseInt(uploadForm.preview_pages) || 3,
         cover_color:    colorPick.color,
         cover_accent:   colorPick.accent,
         published:      true,
@@ -364,6 +414,14 @@ export default function Admin() {
                   <label>{lang === 'fr' ? 'Nombre de pages' : 'عدد الصفحات'}</label>
                   <input type="number" placeholder="0" min="0" value={uploadForm.pages} onChange={e => setUploadForm({ ...uploadForm, pages: e.target.value })} />
                 </div>
+                <div className="form-field">
+                  <label>{lang === 'fr' ? 'Pages aperçu gratuit' : 'صفحات المعاينة المجانية'}</label>
+                  <select value={uploadForm.preview_pages} onChange={e => setUploadForm({ ...uploadForm, preview_pages: e.target.value })}>
+                    <option value="1">1 {lang === 'fr' ? 'page' : 'صفحة'}</option>
+                    <option value="2">2 {lang === 'fr' ? 'pages' : 'صفحات'}</option>
+                    <option value="3">3 {lang === 'fr' ? 'pages' : 'صفحات'}</option>
+                  </select>
+                </div>
               </div>
 
               {published  && <div className="success-toast">✅ {lang === 'fr' ? 'Contenu publié ! Il apparaît maintenant sur le site.' : 'تم النشر! يظهر الآن على الموقع.'}</div>}
@@ -429,42 +487,82 @@ export default function Admin() {
                 <p className="section-sub">{orders.length} {lang === 'fr' ? 'commandes' : 'طلب'}</p>
               </div>
             </div>
+
+            {/* Pending orders alert */}
+            {orders.filter(o => o.status === 'pending').length > 0 && (
+              <div className="pending-alert">
+                <span>⚠️</span>
+                <strong>{orders.filter(o => o.status === 'pending').length}</strong>
+                {lang === 'fr'
+                  ? ' commande(s) en attente — envoie les documents manuellement ci-dessous'
+                  : ' طلب معلق — أرسل المستندات يدوياً أدناه'}
+              </div>
+            )}
+
             <div className="filter-bar">
-              {['all','paid','pending','cancelled'].map(f => (
+              {['all','pending','paid','cancelled'].map(f => (
                 <button key={f} className={`pill-btn ${orderFilter === f ? 'active' : ''}`} onClick={() => setOrderFilter(f)}>
-                  {f === 'all' && (lang === 'fr' ? 'Tout' : 'الكل')}
-                  {f === 'paid' && (lang === 'fr' ? 'Payées' : 'مدفوعة')}
-                  {f === 'pending' && (lang === 'fr' ? 'En attente' : 'معلقة')}
+                  {f === 'all'       && (lang === 'fr' ? 'Tout' : 'الكل')}
+                  {f === 'paid'      && (lang === 'fr' ? '✅ Payées' : '✅ مدفوعة')}
+                  {f === 'pending'   && (lang === 'fr' ? '⏳ En attente' : '⏳ معلقة')}
                   {f === 'cancelled' && (lang === 'fr' ? 'Annulées' : 'ملغاة')}
                 </button>
               ))}
             </div>
+
             <div className="dash-card">
-              {orders.length === 0 ? (
+              {filteredOrders.length === 0 ? (
                 <div style={{ color: 'var(--text2)', fontSize: 13, padding: '24px 0', textAlign: 'center' }}>
-                  {lang === 'fr' ? 'Aucune commande encore.' : 'لا توجد طلبات بعد.'}
+                  {lang === 'fr' ? 'Aucune commande.' : 'لا توجد طلبات.'}
                 </div>
               ) : (
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>#</th>
                       <th>{lang === 'fr' ? 'Client' : 'العميل'}</th>
                       <th>{lang === 'fr' ? 'Email' : 'البريد'}</th>
                       <th>{lang === 'fr' ? 'Paiement' : 'الدفع'}</th>
                       <th>{lang === 'fr' ? 'Total' : 'المجموع'}</th>
                       <th>{lang === 'fr' ? 'Statut' : 'الحالة'}</th>
+                      <th>{lang === 'fr' ? 'Actions' : 'إجراءات'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredOrders.map(o => (
                       <tr key={o.id}>
-                        <td style={{ color: 'var(--text2)', fontSize: 11 }}>#{String(o.id).slice(0,8)}</td>
                         <td className="td-name">{o.client_name}</td>
                         <td className="td-product">{o.client_email}</td>
                         <td><span className="method-tag">{o.payment_method}</span></td>
                         <td><strong>{o.total} TND</strong></td>
                         <td><span className={`badge ${statusInfo[o.status]?.cls || 'badge-amber'}`}>{statusInfo[o.status]?.[L] || o.status}</span></td>
+                        <td>
+                          <div className="action-btns" style={{ gap: 6 }}>
+                            {/* Bouton envoyer email */}
+                            {o.status === 'pending' && !sentOrders[o.id] && (
+                              <button
+                                className="send-btn email"
+                                onClick={() => handleSendDocument(o)}
+                                disabled={sendingOrder === o.id}
+                                title={lang === 'fr' ? 'Envoyer PDF par email' : 'إرسال PDF بالبريد'}
+                              >
+                                {sendingOrder === o.id ? '⏳' : '📧'}
+                                <span>{lang === 'fr' ? 'Email' : 'بريد'}</span>
+                              </button>
+                            )}
+                            {sentOrders[o.id] && (
+                              <span className="sent-badge">✅ {lang === 'fr' ? 'Envoyé' : 'أُرسل'}</span>
+                            )}
+                            {/* Bouton WhatsApp */}
+                            <button
+                              className="send-btn whatsapp"
+                              onClick={() => handleSendWhatsApp(o)}
+                              title={lang === 'fr' ? 'Contacter sur WhatsApp' : 'التواصل عبر واتساب'}
+                            >
+                              💬
+                              <span>WhatsApp</span>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

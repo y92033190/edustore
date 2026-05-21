@@ -8,10 +8,10 @@ import './Cart.css';
 
 // ── Config — remplace par tes vraies infos ──
 const CONFIG = {
-  whatsapp:      '+21629936491',        // ton numéro WhatsApp
+  whatsapp:      '+21600000000',        // ton numéro WhatsApp
   konnect_url:   'https://app.konnect.network/payment-gateway', // URL Konnect
   konnect_key:   'TON_API_KEY_KONNECT', // clé API Konnect
-  paypal_email:  '7waza.contact@email.com',       // email PayPal
+  paypal_email:  'ton@email.com',       // email PayPal
 };
 
 const PAYMENT_METHODS = [

@@ -372,8 +372,8 @@ export default function Product() {
               <div className="locked-text">
                 <strong>
                   {lang === 'fr'
-                    ? `${(product.pages || 30) - previewCount} pages supplémentaires`
-                    : `${(product.pages || 30) - previewCount} صفحة إضافية`}
+                    ? `${Math.max(0, (product.pages || 0) - previewCount)} pages supplémentaires`
+                    : `${Math.max(0, (product.pages || 0) - previewCount)} صفحة إضافية`}
                 </strong>
                 <span>
                   {lang === 'fr' ? 'disponibles après achat' : 'متاحة بعد الشراء'}

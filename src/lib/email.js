@@ -1,9 +1,9 @@
 import emailjs from '@emailjs/browser';
 
 // ── Remplace par tes vraies clés EmailJS ──
-const EMAILJS_SERVICE_ID  = 'service_c921xtw';   // EmailJS → Email Services → Service ID
-const EMAILJS_TEMPLATE_ID = 'template_g4dp2fp';  // EmailJS → Email Templates → Template ID
-const EMAILJS_PUBLIC_KEY  = 'ZPpj9e2n5v-TYQe-X'; // EmailJS → Account → Public Key
+const EMAILJS_SERVICE_ID  = 'service_XXXXXXX';   // EmailJS → Email Services → Service ID
+const EMAILJS_TEMPLATE_ID = 'template_XXXXXXX';  // EmailJS → Email Templates → Template ID
+const EMAILJS_PUBLIC_KEY  = 'XXXXXXXXXXXXXXXXXXXX'; // EmailJS → Account → Public Key
 
 // Initialise EmailJS une seule fois
 emailjs.init(EMAILJS_PUBLIC_KEY);
